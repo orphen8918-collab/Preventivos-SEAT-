@@ -1,0 +1,4 @@
+PREVENTIVOS T10 - ACTUALIZACIÓN (lectura de imágenes y tics OK/NO)
+
+Descomprime y publica el contenido en Netlify mediante un nuevo despliegue manual.
+Después abre la app y recárgala una vez (o cierra y abre la app instalada) para que se actualice la caché.

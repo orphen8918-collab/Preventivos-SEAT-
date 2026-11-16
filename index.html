@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Preventivos T10</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Carlito:wght@400;700&display=swap');:root{--n:#123b63;--b:#dcecf7;--l:#cbd5df;--bg:#f3f6f9}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#17212b;font-family:Carlito,Arial,sans-serif}header{background:var(--n);color:white;padding:20px max(18px,calc((100% - 1180px)/2))}header h1{margin:0;font-size:25px}header p{margin:4px 0 0;color:#dce8f2}main{max-width:1180px;margin:22px auto;padding:0 16px 48px}.panel{background:white;border:1px solid #e1e7ee;border-radius:12px;padding:18px;margin-bottom:16px}h2{font-size:19px;color:var(--n);margin:0 0 13px}.row,.toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap}button{background:var(--n);color:white;border:0;border-radius:8px;padding:10px 14px;font:700 15px Carlito;cursor:pointer}button.secondary{background:#e8eef4;color:#17324d}button:disabled{opacity:.5}input,textarea,select{font:15px Carlito;border:1px solid #bdc9d5;border-radius:7px;padding:8px;width:100%;background:white}.hint,.small{font-size:13px;color:#667085}.status{color:#244e70;margin-top:8px;min-height:18px}.zone{margin:18px 0 8px;padding:9px 12px;background:#123b63;color:#fff;border-radius:8px;font-weight:bold;letter-spacing:.3px}.order{border:1px solid var(--l);border-radius:9px;margin:10px 0 14px;overflow:hidden;background:#fff}.head{background:var(--b);padding:11px 13px;color:var(--n);font-weight:bold;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:13px}.fields label,.point label{font-weight:bold;font-size:13px;display:block;margin-bottom:4px}.fields textarea{min-height:54px}.points{padding:0 13px 13px}.points h3{font-size:16px;color:var(--n);margin:4px 0 8px}.point{display:grid;grid-template-columns:58px minmax(180px,1fr) 105px minmax(150px,1fr);gap:9px;align-items:start;padding:9px 0;border-top:1px solid #e5eaf0}.assignments{display:flex;flex-direction:column;gap:7px}.assignment-row{display:flex;gap:6px;align-items:center}.assignment-row button{padding:7px 10px}.point-tools{padding:8px 0}.point-tools button{font-size:13px;padding:7px 10px}.op{font-weight:bold;color:var(--n);padding-top:8px}.point .desc{font-size:14px;line-height:1.3;padding-top:6px}.point .freq{font-size:12px;color:#667085;padding-top:7px}.state-marks{display:grid;grid-template-columns:1fr 1fr;gap:5px}.state-marks button{background:#eef3f7;color:#244e70;border:1px solid #cbd5df;padding:7px 4px;font-size:13px}.state-marks button.active{background:#d9f2df;border-color:#278347;color:#14532d}.state-marks button.no.active{background:#fde2e2;border-color:#bd3434;color:#8b1e1e}.summaryline{font-size:12px;color:#667085;padding:0 13px 10px}.photo-item{display:grid;grid-template-columns:110px minmax(150px,1fr) minmax(180px,1fr) auto;gap:10px;align-items:center;border-top:1px solid #e5eaf0;padding:10px 0}.photo-item img{width:100px;height:76px;object-fit:cover;border-radius:6px;border:1px solid #ccd5de}.photo-item button{padding:7px 10px}@media(max-width:650px){.photo-item{grid-template-columns:80px 1fr}.photo-item img{width:76px;height:65px}.photo-item .photo-caption,.photo-item button{grid-column:2}}.empty{padding:20px;color:#667085}.pill{font-size:12px;padding:3px 8px;background:#eef3f7;border-radius:20px;color:#244e70}@media(max-width:720px){.fields{grid-template-columns:1fr 1fr}.point{grid-template-columns:48px 1fr 100px}.point .note{grid-column:2/-1}}@media(max-width:480px){.fields{grid-template-columns:1fr}.point{grid-template-columns:42px 1fr}.point .freq{grid-column:2}.point .state{grid-column:2}.point .note{grid-column:2}}
+</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#123b63"><link rel="apple-touch-icon" href="icons/icon-192.png">
+</head><body><header><h1>Preventivos T10</h1><p>Órdenes por zona, mesa en orden alfabético, Hoja de Ruta y puntos de inspección individuales.</p></header><main>
+<section class="panel"><h2>1. Importar órdenes originales</h2><div class="row"><input id="file" type="file" accept="application/pdf,.pdf,image/*,.jpg,.jpeg,.png,.webp" multiple><button id="read">Leer PDF / imágenes</button></div><p class="hint">Importa varios PDF y fotografías/escaneos a la vez (JPG, PNG o WEBP). Las páginas con el mismo número de orden se agrupan automáticamente, aunque procedan de archivos distintos; las operaciones repetidas se muestran una sola vez. Las fotos apaisadas se giran automáticamente para adaptar la hoja al formato vertical A4. Se extraerán las Hojas de Ruta, sus nombres, las zonas, las ubicaciones técnicas y todas las operaciones/puntos que aparecen en cada orden.</p><div id="status" class="status"></div></section>
+<section class="panel" id="globalAssignmentsPanel"><h2>2. Asignaciones generales</h2><p class="hint">Los nombres que añadas aquí se incluirán en el recuadro ASIGNACIONES de todas las órdenes originales cumplimentadas.</p><div id="globalAssignments" class="assignments"></div><div class="point-tools"><button type="button" class="secondary" id="addGlobalAssignment">+ Añadir asignado</button></div></section>
+<section class="panel"><h2>3. Revisar y completar preventivos</h2><p class="hint">Cada punto tiene botones OK y NO para marcar la orden original. Las asignaciones generales se configuran una sola vez arriba y se aplican a todas las órdenes. El estado general del resumen se selecciona por separado en cada orden. Los cambios se guardan automáticamente en este dispositivo.</p><div id="orders"><div class="empty">Todavía no has importado ningún PDF.</div></div></section>
+<section class="panel"><h2>4. Registro fotográfico</h2><p class="hint">Añade fotografías y asígnalas a la mesa o preventivo correspondiente. Aparecerán al final del resumen cumplimentado, con el nombre de la mesa y su descripción.</p><div class="row"><div style="flex:1;min-width:220px"><label for="photoOrder">Mesa / preventivo</label><select id="photoOrder"><option value="">Importa primero las órdenes</option></select></div><div style="flex:2;min-width:220px"><label for="photoFiles">Seleccionar fotografías</label><input id="photoFiles" type="file" accept="image/*" multiple></div><div style="flex:2;min-width:220px"><label for="photoCaption">Descripción de las fotografías</label><input id="photoCaption" placeholder="Ej. Sensor torcido / Sensor corregido"></div><button id="addPhotos" type="button">Añadir fotografías</button></div><div id="photoList" style="margin-top:12px"><p class="empty">Todavía no has añadido fotografías.</p></div></section><section class="panel"><h2>5. Descargar documentos</h2><div class="toolbar"><button id="orig">Órdenes originales cumplimentadas</button><button id="filled">Resumen de control cumplimentado</button><button id="blank" class="secondary">Resumen de control en blanco</button></div><p class="hint">Los resúmenes se agrupan por TAST, TBAT, TPAR y TFR; dentro de cada zona se ordenan alfabéticamente por mesa; en caso de empate, por Hoja de Ruta y número de orden. Incluyen una fila por cada punto preventivo.</p><div id="export" class="status"></div></section></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script><script>
+(()=>{const $=id=>document.getElementById(id),KEY='preventivos_app_v4',PHOTO_KEY='preventivos_fotos_v1';let orders=[],photos=[],globalAssignments=[],sourceBytes=null;try{photos=JSON.parse(localStorage.getItem(PHOTO_KEY)||'[]')}catch(e){photos=[]}try{globalAssignments=JSON.parse(localStorage.getItem('preventivos_asignaciones_globales_v1')||'[]')}catch(e){globalAssignments=[]}if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const clean=s=>(s||'').replace(/\s+/g,' ').trim(),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const save=()=>localStorage.setItem(KEY,JSON.stringify(orders));const saveGlobalAssignments=()=>localStorage.setItem('preventivos_asignaciones_globales_v1',JSON.stringify(globalAssignments));const zoneOrder=['TAST','TBAT','TPAR','TFR'],ORDER_RE=/Orden\s*[:.;]?\s*(\d{4,})/i;
+const normTok=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/0/g,'o').replace(/3/g,'e').replace(/1/g,'l').replace(/5/g,'s').replace(/[^a-z]/g,'');
+const lev=(a,b)=>{if(!a.length)return b.length;if(!b.length)return a.length;let prev=Array.from({length:b.length+1},(_,j)=>j);for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur;}return prev[b.length];};
+const isNombre=v=>{const n=normTok(v.s);return n.length>=5&&(lev(n,'nombre')<=1||n.startsWith('nombr'));};
+const isApellido=v=>{const n=normTok(v.s);return n.length>=5&&(lev(n,'apellido')<=2||lev(n,'apellidos')<=2||n.startsWith('apell'));};
+const isObs=v=>{const n=normTok(v.s);if(n==='obs'||n==='ob')return/^\s*ob[s5]?\s*[:.]?\s*$/i.test(v.s)||n==='obs';return n.length>=11&&n.length<=14&&lev(n,'observaciones')<=2;};
+const isAsign=v=>{const n=normTok(v.s);return n.length>=8&&lev(n,'asignaciones')<=3;};
+function parsePage(items,pageNo,pageHeight=841.92,old={},grid={}){
+// PDF.js entrega coordenadas desde la parte inferior; convertimos a coordenadas superiores
+// para localizar las filas de OPERACIONES de forma consistente.
+const a=items.map(v=>({...v,top:pageHeight-v.y}));
+const all=a.map(v=>v.s).join(' '),match=re=>{let m=all.match(re);return m?clean(m[1]):''};
+const order=match(ORDER_RE)||`PAG-${pageNo}`;
+const description=match(/Descrip\.?\s*:?\s*(.*?)\s+N\s*[ºo°ª.]*\s*Plan\s*[:.;]?/i),plan=match(/N\s*[ºo°ª.]*\s*Plan\s*[:.;]?\s*([A-Z0-9-]+)/i);
+const routeItem=a.find(v=>/^(TAST|TBAT|TPAR|TFR)\d{4,}$/i.test(v.s.trim()));
+const route=routeItem?.s.trim()||'';
+const routeLine=routeItem?a.filter(v=>v!==routeItem&&v.x>420&&Math.abs(v.top-routeItem.top)<(routeItem.ocr?7:4)).sort((x,y)=>x.x-y.x):[];
+const routeName=routeItem?(routeItem.ocr?clean(routeLine.map(v=>v.s).join(' ')):routeLine[0]?.s.trim()||''):'';
+const location=a.find(v=>/^TM\d{2}-[A-Z0-9-]+$/i.test(v.s.trim()))?.s.trim()||'';
+const zone=(route.match(/^(TAST|TBAT|TPAR|TFR)/i)||[])[1]?.toUpperCase()||'SIN ZONA';
+// Cada código de operación es una fila de cuatro dígitos en la columna Op.;
+// se delimita el bloque por la sección MATERIALES para no capturar otros números.
+const opHeaderItem=a.find(v=>/^(OPERACIONES:?|Op\.?)$/i.test(v.s.trim())&&v.top<500);
+const tableTop=opHeaderItem?Math.min(240,opHeaderItem.top):240;
+const materialsY=a.find(v=>/^MATERIALES:?$/i.test(v.s.trim())&&v.top>tableTop)?.top??(pageHeight-40);
+const opItems=a.filter(v=>/^\d{4}(\s|$)/.test(v.s.trim())&&v.x<100&&v.top>tableTop&&v.top<materialsY-4)
+ .map(v=>({...v,s:v.s.trim().slice(0,4)}))
+ .sort((x,y)=>x.top-y.top)
+ .filter((v,i,arr)=>arr.findIndex(q=>q.s===v.s&&Math.abs(q.top-v.top)<8)===i);
+const points=opItems.map((op,i)=>{
+ const nextY=opItems[i+1]?.top??materialsY;
+ const descItems=a.filter(v=>v.x>=65&&v.x<290&&v.top>=op.top-2&&v.top<nextY-2)
+  .sort((x,y)=>x.top-y.top);
+ const freqItems=a.filter(v=>v.x>=285&&v.x<345&&v.top>=op.top-3&&v.top<nextY-2)
+  .sort((x,y)=>x.top-y.top);
+ const prior=(old.points||[]).find(q=>q.op===op.s.trim()&&(!q.pageNo||q.pageNo===pageNo))||(old.points||[]).find(q=>q.op===op.s.trim());
+ // Centro vertical del texto (la línea base queda en la parte baja del texto).
+ const textMid=op.top-4;
+ const rowAbove=(grid.rowLines||[]).filter(y=>y<textMid).at(-1);
+ const rowBelow=(grid.rowLines||[]).find(y=>y>textMid);
+ // Si no se detectan las líneas de la fila, se usa la posición del propio texto
+ // de la operación para que ningún punto se quede sin marcar.
+ const rowOk=Number.isFinite(rowAbove)&&Number.isFinite(rowBelow)&&rowBelow-rowAbove<=60;
+ const rowCenterTop=rowOk?(rowAbove+rowBelow)/2:textMid;
+ return {pageNo:pageNo,op:op.s.trim(),description:clean(descItems.map(v=>v.s.trim()).filter(Boolean).join(' ')),frequency:clean(freqItems.map(v=>v.s.trim()).filter(Boolean).join(' ')),status:prior?.status||'',observation:prior?.observation||'',pdfY:pageHeight-rowCenterTop};
+});
+const rawDescription=old.description||description||plan||'Preventivo'; const mesaMatch=rawDescription.match(/\b([A-Z]\d{3})\b/i); const mesa=old.mesa|| (mesaMatch?'MESA '+mesaMatch[1].toUpperCase():''); let derivedPreventive=rawDescription.replace(/^GR\d+\s*/i,'').replace(/\b[A-Z]\d{3}\b/ig,'').replace(/\bmesa\b/ig,'').trim(); if(/\bgiro\b/i.test(rawDescription))derivedPreventive='GIRATORIA 90º'; if(!derivedPreventive)derivedPreventive='TRANSPORTE'; const preventive=old.preventive||derivedPreventive;
+// Las columnas se obtienen de los límites verticales reales de la tabla
+// detectados en la imagen renderizada de esta página.
+// Detecta los centros de las columnas OK y NO a partir de sus encabezados
+// en la misma banda que la cabecera de operaciones. Evita tics desplazados.
+const headerTop=opHeaderItem?.top??tableTop;
+const statusHeader=(re,fallback)=>{
+ const hits=a.filter(v=>re.test(v.s.trim())&&Math.abs(v.top-headerTop)<32&&v.x>300&&v.x<430);
+ if(!hits.length)return fallback;
+ const best=hits.sort((u,v)=>Math.abs(u.top-headerTop)-Math.abs(v.top-headerTop))[0];
+ return best.x+(best.width||best.s.length*4)/2;
+};
+const okX=Number.isFinite(grid.okX)?grid.okX:statusHeader(/^[O0Q]K[.:]?$/i,353.28),noX=Number.isFinite(grid.noX)?grid.noX:statusHeader(/^N[O0Q][.:]?$/i,380.94);
+// Coordenadas propias de cada página: las secciones ASIGNACIONES y OBS cambian
+// de altura según el número y la longitud de operaciones de la orden.
+const nomC=a.filter(isNombre),apeC=a.filter(isApellido);
+let nombreHeader=null,apellidoHeader=null,assignmentPseudo=false;
+// Se prefiere el par Nombre/Apellido situado en la misma fila (el recuadro de asignaciones, el más bajo de la página).
+for(const n of nomC){const m=apeC.find(q=>Math.abs(q.top-n.top)<9&&q.x>n.x);if(m){nombreHeader=n;apellidoHeader=m;}}
+if(!nombreHeader){nombreHeader=nomC.at(-1)||null;apellidoHeader=apeC.at(-1)||null;}
+if(!nombreHeader&&!apellidoHeader){
+ const asig=a.filter(isAsign).at(-1);
+ // Último recurso: se ancla al título ASIGNACIONES y se usan las columnas de la plantilla (posición aproximada).
+ if(asig){nombreHeader={s:'Nombre',x:136.5,width:24,top:asig.top+12};apellidoHeader={s:'Apellido',x:229.5,width:36,top:asig.top+12};assignmentPseudo=true;}
+}
+// Cada nombre/apellido se centra en la celda real (bordes detectados en la imagen);
+// si no se ven los bordes, se usa el centro del encabezado.
+const hdrCenter=h=>h?h.x+(h.width||h.s.length*4)/2:null;
+const nameCell=(grid.cell&&nombreHeader)?grid.cell(hdrCenter(nombreHeader),nombreHeader.top):null;
+const surCell=(grid.cell&&apellidoHeader)?grid.cell(hdrCenter(apellidoHeader),apellidoHeader.top):null;
+const cellCenter=(c,h)=>c&&c.left!==null?(c.left+c.right)/2:hdrCenter(h);
+const assignmentNameCenter=cellCenter(nameCell,nombreHeader);
+const assignmentSurnameCenter=cellCenter(surCell,apellidoHeader);
+const assignmentNameWidth=nameCell&&nameCell.left!==null?nameCell.right-nameCell.left-6:null;
+const assignmentSurnameWidth=surCell&&surCell.left!==null?surCell.right-surCell.left-6:null;
+// Puede haber varios textos parecidos a «OBS» en la página. Elegimos el rótulo
+// que está más abajo físicamente (el encabezado del recuadro de observaciones),
+// no el último elemento en el orden interno del PDF, que no es fiable.
+const obsHeader=a.filter(v=>isObs(v)&&v.top>80).sort((u,v)=>v.top-u.top)[0]||null;
+// El texto del nombre va en la primera fila de datos, debajo del encabezado,
+// centrado verticalmente dentro de la caja (no encima del título de columna).
+const anchorHdr=nombreHeader||apellidoHeader,anchorCell=nombreHeader?nameCell:surCell;
+const assignmentY=anchorHdr?pageHeight-(anchorHdr.top+19):null;
+// Filas de datos: entre las líneas horizontales debajo del encabezado; el texto se centra en cada fila.
+const assignmentRows=[0,1,2].map(k=>{const L=anchorCell?.lines||[];
+ if(L.length>k+1&&L[k+1]-L[k]>=7&&L[k+1]-L[k]<=40)return pageHeight-((L[k]+L[k+1])/2)-2.6;
+ return Number.isFinite(assignmentY)?assignmentY-k*12:null;});
+// Respaldo sin OCR: en una hoja de continuacion (sin operaciones ni asignaciones) el recuadro OBS
+// es el primer rectangulo grande de la pagina; se localiza por sus dos lineas horizontales.
+const rl=(grid.rowLines||[]).filter(y=>y>60);
+const obsBoxFallback=(!obsHeader&&!points.length&&!nombreHeader&&!apellidoHeader&&rl.length>=2&&rl.length<=4&&rl[1]-rl[0]>=40&&rl[1]-rl[0]<=400)?{top:rl[0],bottom:rl[1]}:null;
+const obsY=obsHeader? pageHeight-(obsHeader.top+10.2):(obsBoxFallback?pageHeight-(obsBoxFallback.top+23):null);
+// Recuadro OBS: bordes izquierdo/derecho y borde inferior (cadena de líneas de texto o línea de cierre).
+const obsCell=(grid.cell&&obsHeader)?grid.cell(obsHeader.x+(obsHeader.width||12)/2,obsHeader.top,300,200):((grid.cell&&obsBoxFallback)?grid.cell(300,obsBoxFallback.top+10,290,200):null);
+const obsX=obsCell&&obsCell.left!==null?obsCell.left+4:null,obsWidth=obsCell&&obsCell.left!==null?obsCell.right-obsCell.left-8:null;
+let obsBottom=obsBoxFallback?pageHeight-obsBoxFallback.bottom:null;
+if(obsCell&&obsHeader){const L=(obsCell.lines||[]).filter(y=>y>obsHeader.top+6);if(L.length){let bot=L[0];for(let i=1;i<L.length&&L[i]-L[i-1]<=20;i++)bot=L[i];obsBottom=pageHeight-bot;}}
+return {page:pageNo,order,description:rawDescription,mesa,preventive,plan,route:old.route||route,routeName:old.routeName||routeName,zone:old.zone||zone,location:old.location||location,status:old.status||'',observation:old.observation||'',assignmentNames:Array.isArray(old.assignmentNames)?old.assignmentNames:[],assignmentY,assignmentNameCenter,assignmentSurnameCenter,obsY,okX,noX,points,pageMeta:{page:pageNo,assignmentY,assignmentRows,assignmentNameCenter,assignmentSurnameCenter,assignmentNameWidth,assignmentSurnameWidth,assignmentPseudo,obsY,obsX,obsWidth,obsBottom}};
+}
+function sorted(){const collator=new Intl.Collator('es',{numeric:true,sensitivity:'base'});return [...orders].sort((a,b)=>{let za=zoneOrder.indexOf(a.zone),zb=zoneOrder.indexOf(b.zone);if(za<0)za=99;if(zb<0)zb=99;return za-zb||collator.compare(a.mesa||a.description||'',b.mesa||b.description||'')||collator.compare(a.routeName||a.route||'',b.routeName||b.route||'')||collator.compare(a.route||'',b.route||'')||collator.compare(a.order||'',b.order||'');});}
+function render(){const groups={};for(const o of sorted())(groups[o.zone]??=[]).push(o);$('orders').innerHTML=Object.keys(groups).map(z=>`<div class="zone">ZONA ${esc(z)} <span class="pill">${groups[z].length} órdenes</span></div>`+groups[z].map(o=>{const i=orders.findIndex(x=>x.order===o.order&&x.page===o.page);return `<article class="order"><div class="head"><span>ORDEN ${esc(o.order)} · ${esc(o.description)}</span><span>${esc(o.route)}${o.routeName?' · '+esc(o.routeName):''}</span></div><div class="fields"><div><label>Hoja de Ruta (código)</label><input data-i="${i}" data-k="route" value="${esc(o.route)}"></div><div><label>Nombre Hoja de Ruta</label><input data-i="${i}" data-k="routeName" value="${esc(o.routeName)}"></div><div><label>Zona</label><select data-i="${i}" data-k="zone">${['TAST','TBAT','TPAR','TFR','SIN ZONA'].map(z=>`<option ${o.zone===z?'selected':''}>${z}</option>`).join('')}</select></div><div><label>Ubicación Técnica</label><input data-i="${i}" data-k="location" value="${esc(o.location)}"></div><div><label>Mesa</label><input data-i="${i}" data-k="mesa" value="${esc(o.mesa||"")}"></div><div><label>Preventivo</label><input data-i="${i}" data-k="preventive" value="${esc(o.preventive||o.description)}"></div><div><label>Descripción original</label><input data-i="${i}" data-k="description" value="${esc(o.description)}"></div><div><label>Estado del resumen de control</label><select data-i="${i}" data-k="status"><option value="" ${!o.status?'selected':''}>Sin seleccionar</option><option value="Ok" ${o.status==='Ok'?'selected':''}>Ok</option><option value="No" ${o.status==='No'?'selected':''}>No</option><option value="M.O." ${o.status==='M.O.'?'selected':''}>M.O.</option></select></div></div><div class="summaryline">${o.points.length} puntos de inspección detectados · Plan: ${esc(o.plan)}</div><div class="points"><h3>Puntos del preventivo</h3>${o.points.map((p,j)=>`<div class="point"><div class="op"><input aria-label="Número de operación" data-i="${i}" data-p="${j}" data-k="op" value="${esc(p.op)}" placeholder="Nº"></div><div class="desc"><textarea aria-label="Descripción del punto" data-i="${i}" data-p="${j}" data-k="description" rows="2" placeholder="Descripción del punto">${esc(p.description)}</textarea><div class="freq"><label>Frecuencia</label><input data-i="${i}" data-p="${j}" data-k="frequency" value="${esc(p.frequency)}"></div></div><div class="state"><label>Marcar en la orden</label><div class="state-marks"><button type="button" class="${p.status==='OK'?'active':''}" data-action="set-point-status" data-i="${i}" data-p="${j}" data-state="OK">OK ${p.status==='OK'?'✓':''}</button><button type="button" class="no ${p.status==='NO'?'active':''}" data-action="set-point-status" data-i="${i}" data-p="${j}" data-state="NO">NO ${p.status==='NO'?'✓':''}</button></div></div><div class="note"><label>Observaciones del punto</label><input data-i="${i}" data-p="${j}" data-k="observation" value="${esc(p.observation)}" placeholder="Observación (opcional)"></div></div>`).join('')}<div class="point-tools"><button type="button" class="secondary" data-action="add-point" data-i="${i}">+ Añadir punto preventivo</button></div></div></article>`;}).join('')).join('')||'<div class="empty">No hay órdenes reconocidas.</div>';renderGlobalAssignments();renderPhotos();}
+function renderGlobalAssignments(){ $('globalAssignments').innerHTML=globalAssignments.map((name,j)=>`<div class="assignment-row"><input data-global-assignment="${j}" value="${esc(name)}" placeholder="Nombre y apellidos"><button type="button" class="secondary" data-global-remove="${j}" title="Eliminar">×</button></div>`).join('');}
+function savePhotos(){try{localStorage.setItem(PHOTO_KEY,JSON.stringify(photos));}catch(e){alert('No hay espacio suficiente para guardar las fotografías en este navegador. Prueba con imágenes más pequeñas.');}}
+function renderPhotos(){const sel=$('photoOrder'),current=sel.value;sel.innerHTML=orders.length?sorted().map(o=>`<option value="${esc(o.page)}">${esc(o.mesa||o.description||'Mesa sin nombre')} · Orden ${esc(o.order)}</option>`).join(''):'<option value="">Importa primero las órdenes</option>';if(current&&[...sel.options].some(x=>x.value===current))sel.value=current;$('addPhotos').disabled=!orders.length;const list=$('photoList');if(!photos.length){list.innerHTML='<p class="empty">Todavía no has añadido fotografías.</p>';return;}list.innerHTML=photos.map((p,i)=>{const opts=sorted().map(o=>`<option value="${o.page}" ${String(o.page)===String(p.page)?'selected':''}>${esc(o.mesa||o.description||'Mesa sin nombre')} · Orden ${esc(o.order)}</option>`).join('');return `<div class="photo-item"><img src="${p.data}" alt="Fotografía ${i+1}"><div><label>Mesa asignada</label><select data-photo="${i}" data-pk="page">${opts}</select><div class="small">${esc(p.fileName||'Fotografía')}</div></div><div class="photo-caption"><label>Descripción</label><input data-photo="${i}" data-pk="caption" value="${esc(p.caption||'')}" placeholder="Ej. Sensor torcido"></div><button type="button" class="secondary" data-photo-remove="${i}">Eliminar</button></div>`;}).join('');}
+function fileToDataURL(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>{const img=new Image();img.onload=()=>{const max=1500,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);resolve(canvas.toDataURL('image/jpeg',.78));};img.onerror=reject;img.src=r.result;};r.onerror=reject;r.readAsDataURL(file);});}
+$('addGlobalAssignment').onclick=()=>{globalAssignments.push('');saveGlobalAssignments();renderGlobalAssignments();const a=$('globalAssignments').querySelectorAll('input');a[a.length-1]?.focus();};
+$('globalAssignments').addEventListener('input',e=>{const j=e.target.dataset.globalAssignment;if(j===undefined)return;globalAssignments[+j]=e.target.value;saveGlobalAssignments();});
+$('globalAssignments').addEventListener('click',e=>{const b=e.target.closest('[data-global-remove]');if(!b)return;globalAssignments.splice(+b.dataset.globalRemove,1);saveGlobalAssignments();renderGlobalAssignments();});
+renderGlobalAssignments();
+$('addPhotos').onclick=async()=>{const page=Number($('photoOrder').value),files=[...$('photoFiles').files];if(!page||!files.length){alert('Selecciona una mesa y al menos una fotografía.');return;}const o=orders.find(x=>x.page===page);try{for(const file of files){if(!file.type.startsWith('image/'))continue;photos.push({page,order:o?.order||'',mesa:o?.mesa||'',caption:$('photoCaption').value.trim(),fileName:file.name,data:await fileToDataURL(file)});}savePhotos();renderPhotos();$('photoFiles').value='';$('photoCaption').value='';}catch(e){alert('No se pudo cargar una fotografía: '+e.message);}};
+$('photoList').addEventListener('change',e=>{const i=e.target.dataset.photo,k=e.target.dataset.pk;if(i===undefined)return;const p=photos[+i];if(k==='page'){p.page=Number(e.target.value);const o=orders.find(x=>x.page===p.page);p.order=o?.order||'';p.mesa=o?.mesa||'';}else if(k==='caption')p.caption=e.target.value;savePhotos();if(k==='page')renderPhotos();});
+$('photoList').addEventListener('input',e=>{const i=e.target.dataset.photo;if(i!==undefined&&e.target.dataset.pk==='caption'){photos[+i].caption=e.target.value;savePhotos();}});
+$('photoList').addEventListener('click',e=>{const b=e.target.closest('[data-photo-remove]');if(!b)return;photos.splice(+b.dataset.photoRemove,1);savePhotos();renderPhotos();});
+$('orders').addEventListener('input',e=>updateField(e));$('orders').addEventListener('change',e=>updateField(e));$('orders').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const o=orders[+b.dataset.i];if(!o)return;const j=Number(b.dataset.a);if(b.dataset.action==='set-point-status'){const p=o.points[Number(b.dataset.p)];if(p){p.status=p.status===b.dataset.state?'':b.dataset.state;save();render();}}else if(b.dataset.action==='add-point'){o.points.push({op:'',description:'',frequency:'',status:'',observation:''});save();render();}});function updateField(e){let el=e.target;if(el.dataset.i===undefined)return;let o=orders[+el.dataset.i];if(el.dataset.p!==undefined)o.points[+el.dataset.p][el.dataset.k]=el.value;else{o[el.dataset.k]=el.value;if(el.dataset.k==='zone')render();}save();}
+function detectOperationGrid(canvas,scale=1){
+ const ctx=canvas.getContext('2d',{willReadFrequently:true});
+ const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
+ const dark=(x,y)=>{const k=(y*canvas.width+x)*4;return data[k]<200&&data[k+1]<200&&data[k+2]<200;};
+ const S=v=>Math.round(v*scale),W=canvas.width,H=canvas.height;
+ const merge=(arr,gap)=>{const r=[];for(const v of arr){if(!r.length||v-r[r.length-1]>gap)r.push(v);else r[r.length-1]=(r[r.length-1]+v)/2;}return r;};
+ // Líneas horizontales: umbral relativo y tolerancia a pequeños huecos (fotos).
+ const x0=S(27),x1=Math.min(S(554),W),need=(x1-x0)*.5,horizontal=[];
+ for(let y=S(60);y<H;y++){let count=0;for(let x=x0;x<x1;x+=1)if(dark(x,y)||(y>0&&dark(x,y-1))||(y<H-1&&dark(x,y+1)))count++;if(count>need)horizontal.push(y/scale);}
+ const rowLines=merge(horizontal,2.5);
+ // Líneas verticales entre columnas: se busca un triple regular (borde-OK, OK|NO, borde-NO).
+ const vertical=[],yA=S(220),yB=Math.min(S(520),H);
+ for(let x=S(300);x<Math.min(S(440),W);x++){let count=0;for(let y=yA;y<yB;y++)if(dark(x,y)||(x>0&&dark(x-1,y))||(x<W-1&&dark(x+1,y)))count++;if(count>S(70))vertical.push(x/scale);}
+ const vLines=merge(vertical,3);
+ let okX=null,noX=null;
+ for(let i=0;i+2<vLines.length;i++){const g1=vLines[i+1]-vLines[i],g2=vLines[i+2]-vLines[i+1];
+  if(g1>=16&&g1<=42&&g2>=16&&g2<=42&&Math.abs(g1-g2)<=8){okX=(vLines[i]+vLines[i+1])/2;noX=(vLines[i+1]+vLines[i+2])/2;break;}}
+ // Sonda para el recuadro ASIGNACIONES: bordes izquierdo/derecho de la celda que contiene un encabezado
+ // y líneas horizontales situadas debajo (filas de datos). Todo en puntos PDF, con origen arriba.
+ const hit=(x,y)=>{const X=Math.round(x*scale),Y=Math.round(y*scale);return X>=1&&Y>=1&&X<W-1&&Y<H-1&&(dark(X,Y)||dark(X-1,Y)||dark(X+1,Y)||dark(X,Y-1)||dark(X,Y+1));};
+ const vFrac=(x,y0,y1)=>{let c=0,n=0;for(let y=y0;y<=y1;y+=1/scale){n++;if(hit(x,y))c++;}return n?c/n:0;};
+ const hFrac=(y,x0,x1)=>{let c=0,n=0;for(let x=x0;x<=x1;x+=1/scale){n++;if(hit(x,y))c++;}return n?c/n:0;};
+ const cell=(xc,top,maxW=130,depth=75)=>{
+  const y0=top-10,y1=top+15;let left=null,right=null;
+  for(let x=xc-3;x>xc-maxW;x-=.5)if(vFrac(x,y0,y1)>.8){left=x;break;}
+  for(let x=xc+3;x<xc+maxW;x+=.5)if(vFrac(x,y0,y1)>.8){right=x;break;}
+  const okBox=left!==null&&right!==null&&right-left>=30&&right-left<=Math.max(230,maxW*2);
+  const bx0=okBox?left+4:xc-25,bx1=okBox?right-4:xc+25,found=[];
+  for(let y=top+1;y<top+depth;y+=1/scale)if(hFrac(y,bx0,bx1)>.8)found.push(y);
+  return {left:okBox?left:null,right:okBox?right:null,lines:merge(found,2.5)};
+ };
+ // Si no se detecta, se devuelve null y parsePage usa los encabezados OK/NO o la plantilla.
+ return {rowLines,okX,noX,cell};
+}
+// ---- Importación de imágenes como páginas PDF + OCR ----
+const isPdfFile=f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+const isImageFile=f=>/^image\//i.test(f.type)||/\.(jpe?g|png|webp|gif|bmp)$/i.test(f.name);
+function loadImageFile(file){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};img.onerror=()=>{URL.revokeObjectURL(url);reject(Error(`No se pudo abrir la imagen «${file.name}». Usa JPG, PNG o WEBP.`));};img.src=url;});}
+// Limpia la fotografía como si fuera un escaneo: se estima el fondo del papel
+// (sombras, iluminación irregular) y se divide para dejar el papel blanco y la tinta oscura.
+// Así la detección de la tabla y el OCR funcionan igual que con la plantilla PDF.
+function estimateSkew(g,w,h){
+ const pts=[];for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(g[y*w+x]<110)pts.push(x,y);
+ if(pts.length<400)return 0;
+ const off=Math.ceil(w*.2)+2,score=a=>{const t=Math.tan(a*Math.PI/180),hist=new Float32Array(h+2*off);
+  for(let i=0;i<pts.length;i+=2){const yy=Math.round(pts[i+1]-pts[i]*t)+off;if(yy>=0&&yy<hist.length)hist[yy]++;}
+  let sc=0;for(let i=0;i<hist.length;i++)sc+=hist[i]*hist[i];return sc;};
+ let best=0,bs=-1;for(let a=-8;a<=8.001;a+=.5){const v=score(a);if(v>bs){bs=v;best=a;}}
+ const c0=best;for(let a=c0-.5;a<=c0+.501;a+=.1){const v=score(a);if(v>bs){bs=v;best=a;}}
+ return best;
+}
+function scanLikeCanvas(img){
+ const iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height;
+ // Las órdenes T10 son verticales A4. Algunas fotos llegan giradas 90°;
+ // si la imagen es apaisada, se rota automáticamente en sentido horario.
+ const rotate=iw>ih,sourceW=rotate?ih:iw,sourceH=rotate?iw:ih;
+ const max=2600,scale=Math.min(1,max/Math.max(sourceW,sourceH));
+ const W=Math.max(1,Math.round(sourceW*scale)),H=Math.max(1,Math.round(sourceH*scale));
+ const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});
+ x.fillStyle='#fff';x.fillRect(0,0,W,H);
+ if(rotate){x.translate(W,0);x.rotate(Math.PI/2);x.drawImage(img,0,0,iw*scale,ih*scale);}else{x.drawImage(img,0,0,W,H);}
+ const im=x.getImageData(0,0,W,H),d=im.data;
+ // Fondo: imagen reducida, dilatada (máximo local) para borrar la tinta y ampliada de nuevo.
+ const sw=Math.max(8,Math.round(W/28)),sh=Math.max(8,Math.round(H/28));
+ const sc=document.createElement('canvas');sc.width=sw;sc.height=sh;const sx=sc.getContext('2d',{willReadFrequently:true});
+ sx.drawImage(c,0,0,sw,sh);const sd=sx.getImageData(0,0,sw,sh),sp=sd.data,lum=new Float32Array(sw*sh);
+ for(let i=0;i<sw*sh;i++)lum[i]=.299*sp[i*4]+.587*sp[i*4+1]+.114*sp[i*4+2];
+ const bgSmall=new Float32Array(sw*sh);
+ for(let yy=0;yy<sh;yy++)for(let xx=0;xx<sw;xx++){let m=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const X=xx+dx,Y=yy+dy;if(X>=0&&Y>=0&&X<sw&&Y<sh&&lum[Y*sw+X]>m)m=lum[Y*sw+X];}bgSmall[yy*sw+xx]=Math.max(60,m);}
+ for(let i=0;i<sw*sh;i++){sp[i*4]=sp[i*4+1]=sp[i*4+2]=bgSmall[i];sp[i*4+3]=255;}
+ sx.putImageData(sd,0,0);
+ const bc=document.createElement('canvas');bc.width=W;bc.height=H;const bx=bc.getContext('2d',{willReadFrequently:true});bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(sc,0,0,W,H);
+ const bg=bx.getImageData(0,0,W,H).data;
+ for(let i=0;i<d.length;i+=4){
+  const l=.299*d[i]+.587*d[i+1]+.114*d[i+2];let v=l/Math.max(1,bg[i]);
+  // Niveles: el papel (≥ 88 % del fondo) queda blanco; la tinta se refuerza.
+  v=v>=.88?1:Math.pow(Math.max(0,v/.88),1.6);const g=Math.round(v*255);d[i]=d[i+1]=d[i+2]=g;d[i+3]=255;
+ }
+ x.putImageData(im,0,0);
+ // Enderezado: las fotos suelen salir ligeramente inclinadas y entonces las filas y columnas no coinciden con la plantilla.
+ try{const f=Math.max(1,Math.round(W/700)),gw=Math.floor(W/f),gh=Math.floor(H/f),g=new Uint8Array(gw*gh);
+  for(let yy=0;yy<gh;yy++)for(let xx=0;xx<gw;xx++){let m=255;for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++){const v=d[((yy*f+dy)*W+xx*f+dx)*4];if(v<m)m=v;}g[yy*gw+xx]=m;}
+  const ang=estimateSkew(g,gw,gh);
+  if(Math.abs(ang)>=.35){const r=document.createElement('canvas');r.width=W;r.height=H;const rx=r.getContext('2d',{willReadFrequently:true});rx.fillStyle='#fff';rx.fillRect(0,0,W,H);rx.translate(W/2,H/2);rx.rotate(-ang*Math.PI/180);rx.drawImage(c,-W/2,-H/2);return r;}
+ }catch(e){}
+ return c;
+}
+async function imageToJpeg(file){
+ const img=await loadImageFile(file);let source=img;
+ // Las fotos de órdenes suelen llegar giradas en horizontal: la plantilla es A4 vertical.
+ if(img.width>img.height){const rotated=document.createElement('canvas');rotated.width=img.height;rotated.height=img.width;const rctx=rotated.getContext('2d');rctx.translate(rotated.width/2,rotated.height/2);rctx.rotate(Math.PI/2);rctx.drawImage(img,-img.width/2,-img.height/2);source=rotated;}
+ const c=scanLikeCanvas(source);
+ const blob=await new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(Error('No se pudo convertir la imagen '+file.name)),'image/jpeg',.9));
+ return {bytes:new Uint8Array(await blob.arrayBuffer()),width:c.width,height:c.height};
+}
+// Une PDFs e imágenes en un único PDF A4. Cada imagen ocupa una página, igual que en el PDF original,
+// para que las órdenes cumplimentadas se generen sobre ella con el mismo formato.
+async function buildSourcePdf(files){
+ if(files.length===1&&isPdfFile(files[0]))return {bytes:await files[0].arrayBuffer(),imagePages:new Set()};
+ const collator=new Intl.Collator('es',{numeric:true,sensitivity:'base'});
+ const list=[...files].sort((a,b)=>collator.compare(a.name,b.name));
+ const {PDFDocument}=PDFLib,out=await PDFDocument.create(),imagePages=new Set(),A4W=595.28,A4H=841.89;
+ for(let i=0;i<list.length;i++){
+  const f=list[i];
+  if(isPdfFile(f)){const src=await PDFDocument.load(await f.arrayBuffer(),{ignoreEncryption:true});const copied=await out.copyPages(src,src.getPageIndices());copied.forEach(p=>out.addPage(p));continue;}
+  $('status').textContent=`Convirtiendo imagen ${i+1} de ${list.length} en página PDF…`;
+  const im=await imageToJpeg(f),jpg=await out.embedJpg(im.bytes),page=out.addPage([A4W,A4H]);
+  const ratio=(im.width/im.height)/(A4W/A4H);
+  // Si la foto tiene proporción de folio, ocupa toda la página para coincidir con la plantilla.
+  if(ratio>.85&&ratio<1.15)page.drawImage(jpg,{x:0,y:0,width:A4W,height:A4H});
+  else{const s=Math.min(A4W/im.width,A4H/im.height),w=im.width*s,h=im.height*s;page.drawImage(jpg,{x:(A4W-w)/2,y:(A4H-h)/2,width:w,height:h});}
+  imagePages.add(out.getPageCount());
+ }
+ return {bytes:await out.save(),imagePages};
+}
+const TESSERACT_URL='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorkerPromise=null,ocrProgress=null;
+function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(Error('No se pudo cargar el lector OCR. Comprueba la conexión a Internet.'));document.head.appendChild(s);});}
+function getOcrWorker(){
+ if(!ocrWorkerPromise)ocrWorkerPromise=(async()=>{
+  if(!window.Tesseract)await loadScript(TESSERACT_URL);
+  const w=await Tesseract.createWorker('spa',1,{logger:m=>{if(m.status==='recognizing text'&&ocrProgress)ocrProgress(m.progress||0);}});
+  await w.setParameters({preserve_interword_spaces:'1'});return w;
+ })().catch(e=>{ocrWorkerPromise=null;throw e;});
+ return ocrWorkerPromise;
+}
+function releaseOcrWorker(){if(!ocrWorkerPromise)return;const p=ocrWorkerPromise;ocrWorkerPromise=null;p.then(w=>w.terminate()).catch(()=>{});}
+// Corrige confusiones típicas del OCR en los códigos numéricos de operación (O→0, l→1…).
+const fixOcrToken=t=>{t=t.trim();if(/^[0-9OoIl|S]{4}[.,:;]?$/.test(t)&&/\d/.test(t))t=t.replace(/[.,:;]$/,'').replace(/[Oo]/g,'0').replace(/[Il|]/g,'1').replace(/S/g,'5');return t;};
+// Devuelve las palabras reconocidas con el mismo formato que el texto de PDF.js
+// (coordenadas PDF con origen abajo a la izquierda, línea base en y).
+async function ocrItems(canvas,scale,pageHeight,onProgress){
+ const w=await getOcrWorker();ocrProgress=onProgress;
+ try{
+  const {data}=await w.recognize(canvas);
+  return (data.words||[]).filter(v=>v.text&&v.text.trim()&&v.confidence>=15&&!/^[|_\-—–=.,:;'"`~¦!\[\]()]+$/.test(v.text.trim())).map(v=>{
+   const b=v.bbox,bl=v.baseline,base=bl&&Number.isFinite(bl.y0)&&Number.isFinite(bl.y1)&&bl.y0>b.y0?Math.min(b.y1,Math.max(bl.y0,bl.y1)):b.y1;
+   return {s:fixOcrToken(v.text),x:b.x0/scale,y:pageHeight-base/scale,width:(b.x1-b.x0)/scale,ocr:true};
+  });
+ }finally{ocrProgress=null;}
+}
+async function addOpColumnOcr(canvas,scale,pageHeight,ocr){
+ let w=null;
+ try{
+  w=await getOcrWorker();
+  const known=ocr.filter(v=>/^\d{4}$/.test(String(v.s).trim())).map(v=>v.x).sort((a,b)=>a-b);
+  const mx=known.length?known[Math.floor(known.length/2)]:30;
+  const left=Math.max(0,mx-22),right=Math.min(canvas.width/scale,mx+52),top=170,bottom=pageHeight-30;
+  const cx=Math.round(left*scale),cy=Math.round(top*scale),cw=Math.round((right-left)*scale),ch=Math.min(Math.round((bottom-top)*scale),canvas.height-cy);
+  if(cw<20||ch<20)return;
+  const c=document.createElement('canvas');c.width=cw;c.height=ch;const cc=c.getContext('2d');cc.fillStyle='#fff';cc.fillRect(0,0,cw,ch);cc.drawImage(canvas,cx,cy,cw,ch,0,0,cw,ch);
+  await w.setParameters({tessedit_char_whitelist:'0123456789',tessedit_pageseg_mode:'6'});
+  const {data}=await w.recognize(c);
+  for(const v of (data.words||[])){
+   const t=String(v.text||'').replace(/\D/g,'');
+   // Los códigos de operación SAP son múltiplos de 10 (0010, 0020…): filtra dígitos sueltos.
+   if(!/^\d{3}0$/.test(t))continue;
+   const b=v.bbox,topPdf=(cy+b.y1)/scale;
+   if(ocr.some(q=>/^\d{4}$/.test(String(q.s).trim())&&Math.abs((pageHeight-q.y)-topPdf)<8))continue;
+   ocr.push({s:t,x:(cx+b.x0)/scale,y:pageHeight-topPdf,width:(b.x1-b.x0)/scale,ocr:true});
+  }
+ }catch(e){console.warn('Pasada OCR de operaciones omitida',e);}
+ finally{try{if(w)await w.setParameters({tessedit_char_whitelist:'',tessedit_pageseg_mode:'3'});}catch(e){}}
+}
+async function read(){
+ const files=[...$('file').files];if(!files.length){$('status').textContent='Selecciona el PDF original o las imágenes de las órdenes.';return;}
+ const unsupported=files.filter(f=>!isPdfFile(f)&&!isImageFile(f));if(unsupported.length){$('status').textContent='Formato no compatible: '+unsupported.map(f=>f.name).join(', ');return;}
+ let usedOcr=0;
+ try{
+  $('read').disabled=true;$('status').textContent='Leyendo páginas, Hojas de Ruta y operaciones…';
+  const built=await buildSourcePdf(files);sourceBytes=built.bytes;const pdf=await pdfjsLib.getDocument({data:new Uint8Array(sourceBytes.slice(0))}).promise;
+  let old=[];try{old=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){}
+  if(!globalAssignments.length){const migrated=[...new Set(old.flatMap(x=>Array.isArray(x.assignmentNames)?x.assignmentNames:[]).map(v=>String(v||'').trim()).filter(Boolean))];if(migrated.length){globalAssignments=migrated;saveGlobalAssignments();}}
+  orders=[];const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+  for(let n=1;n<=pdf.numPages;n++){
+   $('status').textContent=`Analizando plantilla y operaciones: página ${n} de ${pdf.numPages}…`;
+   const page=await pdf.getPage(n),content=await page.getTextContent();let items=content.items.filter(x=>x.str.trim()).map(x=>({s:x.str,x:x.transform[4],y:x.transform[5],width:x.width||0}));
+   // Ejecutamos OCR en TODAS las páginas, no solo cuando el PDF carece de texto.
+   // Muchos escaneos contienen encabezados seleccionables, pero las filas de operaciones
+   // son una imagen; por eso una comprobación basada en la cantidad de texto da falsos negativos.
+   const viewport=page.getViewport({scale:1}),RS=3,renderViewport=page.getViewport({scale:RS});canvas.width=Math.ceil(renderViewport.width);canvas.height=Math.ceil(renderViewport.height);
+   ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   await page.render({canvasContext:ctx,viewport:renderViewport}).promise;const grid=detectOperationGrid(canvas,RS);
+   const label=`Reconociendo puntos preventivos (OCR): página ${n} de ${pdf.numPages}`;$('status').textContent=label+'…';
+   const nativeItems=items,ocr=await ocrItems(canvas,RS,viewport.height,pr=>{$('status').textContent=`${label}: ${Math.round(pr*100)}%`;});
+   await addOpColumnOcr(canvas,RS,viewport.height,ocr);
+   const ocrHasOps=ocr.some(x=>/^\d{4}$/.test(String(x.s||'').trim()));
+   // Cuando el OCR localiza códigos, usamos sus coordenadas para extraer las filas.
+   // Conservamos del PDF nativo el identificador de orden si el OCR no lo leyó.
+   if(ocrHasOps){items=ocr;if(!items.some(x=>ORDER_RE.test(x.s)))items.push(...nativeItems.filter(x=>ORDER_RE.test(x.s)));}
+   else if(!items.length)items=ocr;
+   if(!items.some(isNombre)||!items.some(isObs)){
+    try{const w2=await getOcrWorker();await w2.setParameters({tessedit_pageseg_mode:'11'});
+     const extra=await ocrItems(canvas,RS,viewport.height,pr=>{$('status').textContent=`${label} (2.ª lectura): ${Math.round(pr*100)}%`;});
+     for(const e of extra)if((isNombre(e)||isApellido(e)||isAsign(e)||isObs(e))&&!items.some(q=>q.s===e.s&&Math.abs(q.x-e.x)<6&&Math.abs(q.y-e.y)<6))items.push(e);
+    }catch(e){console.warn('Segunda lectura omitida',e);}
+    finally{try{await (await getOcrWorker()).setParameters({tessedit_pageseg_mode:'3'});}catch(e){}}
+   }
+   // El texto nativo del PDF (si existe) da las posiciones exactas de las cabeceras de asignaciones.
+   for(const e of nativeItems)if((isNombre(e)||isApellido(e)||isAsign(e)||isObs(e))&&!items.includes(e))items.push(e);
+   usedOcr++;
+   const ord=items.map(x=>x.s).join(' ').match(ORDER_RE)?.[1]||'';
+   const previous=old.find(x=>x.order===ord)||{};const parsed=parsePage(items,n,viewport.height,previous,grid);
+   // Una orden puede ocupar varias páginas. Se agrupa por número de orden;
+   // si la página de continuación no repite el número, se incorpora a la última orden.
+   let target=ord?orders.find(x=>x.order===parsed.order):null;
+   if(!target&&!ord&&orders.length){
+    const pageText=items.map(x=>x.s).join(' ');
+    // Si una página de continuación no repite el identificador, se adjunta
+    // a la última orden cuando contiene operaciones o el bloque OBS.
+    const last=orders[orders.length-1],lastOps=new Set(last.points.map(q=>String(q.op||'').trim()));
+    const repeats=parsed.points.some(q=>lastOps.has(String(q.op||'').trim()));
+    if(!repeats&&(parsed.points.length||/\bOBS\b/i.test(pageText)))target=last;
+   }
+   // Hoja de continuacion (solo recuadro OBS): si el numero de orden no se lee o no coincide, va con la orden anterior.
+   if(!target&&orders.length&&!parsed.points.length&&Number.isFinite(parsed.pageMeta.obsY)&&!items.some(isNombre))target=orders[orders.length-1];
+   if(target){
+    target.pages.push(parsed.pageMeta);
+    // Una operación es única dentro de una orden, aunque el PDF o la foto
+    // repita la misma fila en otra página. La página de origen se conserva
+    // en el primer registro para marcar el tic en la hoja correcta.
+    const seen=new Set(target.points.map(q=>String(q.op||'').trim()).filter(Boolean));
+    for(const point of parsed.points){const key=String(point.op||'').trim();if(!key||!seen.has(key)){target.points.push(point);if(key)seen.add(key);}}
+    if(!target.route&&parsed.route)target.route=parsed.route;
+    if(!target.routeName&&parsed.routeName)target.routeName=parsed.routeName;
+    if(!target.location&&parsed.location)target.location=parsed.location;
+   }else{
+    parsed.pages=[parsed.pageMeta];orders.push(parsed);
+   }
+  }
+  orders=sorted();render();save();renderPhotos();
+  let npoints=orders.reduce((n,o)=>n+o.points.length,0);
+  $('status').textContent=`Lectura completada: ${orders.length} órdenes únicas y ${npoints} puntos de inspección detectados en ${pdf.numPages} páginas. Las órdenes que ocupan varias páginas se muestran una sola vez.`+(usedOcr?` Se leyeron ${usedOcr} páginas mediante OCR: revisa los datos antes de generar los documentos.`:'');
+ }catch(e){$('status').textContent='No se pudieron leer los archivos: '+e.message;}
+ finally{$('read').disabled=false;releaseOcrWorker();}
+}
+$('read').onclick=read;
+async function summary(blank){
+ if(!orders.length)throw Error('Importa primero el PDF de órdenes.');
+ const {PDFDocument,StandardFonts,rgb}=PDFLib,pdf=await PDFDocument.create();
+ const font=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold),form=pdf.getForm();
+ const W=595.28,H=841.89,M=25,navy=rgb(.07,.23,.39),pale=rgb(.85,.92,.97),white=rgb(1,1,1),grey=rgb(.96,.97,.98),line=rgb(.72,.78,.83),black=rgb(.08,.12,.16);
+ const widths=blank?[170,65,125,55,130]:[76,100,65,120,48,136],headers=blank?['MESA / PREVENTIVO','ORDEN','UBICACIÓN TÉCNICA','ESTADO','OBSERVACIONES']:['MESA','PREVENTIVO','ORDEN','UBICACIÓN TÉCNICA','ESTADO','OBSERVACIONES'];
+ const date=new Date().toLocaleDateString('es-ES');let pg,y,row=0,field=0,lastZone='';
+ const safe=t=>{let r='';for(const c of String(t??'').replace(/[\t\u00a0]/g,' ')){try{font.encodeText(c);r+=c;}catch(e){r+='?';}}return r;};
+ function wrap(s,max,size=7.4,f=font){const lines=[];safe(s).split(/\r?\n/).forEach(par=>{let lineText='';for(const w of par.split(/\s+/).filter(Boolean)){const t=lineText?lineText+' '+w:w;if(f.widthOfTextAtSize(t,size)>max&&lineText){lines.push(lineText);lineText=w;}else lineText=t;}if(lineText)lines.push(lineText);});return lines.length?lines:[''];}
+ function header(){let x=M;headers.forEach((s,i)=>{pg.drawRectangle({x,y:y-27,width:widths[i],height:27,color:navy,borderColor:line,borderWidth:.45});wrap(s,widths[i]-8,6.5,bold).forEach((t,k)=>pg.drawText(t,{x:x+4,y:y-11-k*8,size:6.5,font:bold,color:white}));x+=widths[i];});y-=27;}
+ function newPage(){pg=pdf.addPage([W,H]);pg.drawText('CONTROL PREVENTIVOS DEFINITIVO',{x:M,y:H-31,size:13,font:bold,color:navy});pg.drawText(date,{x:M,y:H-45,size:8,font,color:black});y=H-59;header();if(lastZone)zoneHeader(lastZone);}
+ function zoneHeader(z){if(y<70){lastZone=z;newPage();return;}pg.drawRectangle({x:M,y:y-18,width:W-2*M,height:18,color:pale,borderColor:line,borderWidth:.4});pg.drawText(''+z,{x:M+5,y:y-12.5,size:8,font:bold,color:navy});y-=18;}
+ function rowData(o){
+   const mesa=o.mesa||o.description||'';
+   const preventive=o.preventive||'';
+   const pointNotes=(o.points||[]).filter(p=>p.observation&&p.observation.trim()).map(p=>(p.op?'Op. '+p.op+': ':'')+p.observation.trim());
+   const obs=[o.observation,...pointNotes].filter(Boolean).join('\n');
+   const statuses=(o.points||[]).map(p=>p.status).filter(Boolean);
+   const state=o.status||'';
+   return blank?[`${mesa}${preventive?' · '+preventive:''}`,o.order,o.location,'', '']:[mesa,preventive,o.order,o.location,state,obs];
+ }
+ newPage();
+ for(const o of sorted()){
+   if(o.zone!==lastZone){lastZone=o.zone;zoneHeader(lastZone);}
+   const vals=rowData(o),lines=vals.map((v,i)=>wrap(v,widths[i]-8,7.1));
+   const maxLines=Math.max(1,...lines.map(a=>a.length)),h=Math.max(27,Math.min(400,Math.max(1,maxLines)*9+10));
+   if(y-h<42){newPage();}
+   const actualLines=vals.map((v,i)=>wrap(v,widths[i]-8,7.1));const actualMax=Math.max(1,...actualLines.map(a=>a.length)),rh=Math.max(27,Math.min(400,actualMax*9+10));
+   let x=M;
+   for(let i=0;i<widths.length;i++){
+     pg.drawRectangle({x,y:y-rh,width:widths[i],height:rh,color:row%2?grey:white,borderColor:line,borderWidth:.35});
+     if(blank&&((headers[i]==='ESTADO')||(headers[i]==='OBSERVACIONES'))){
+       const nm=(i===3?'estado_':'observacion_')+field;
+       const f=form.createTextField(nm);if(i===4)f.enableMultiline();
+       f.addToPage(pg,{x:x+2,y:y-rh+2,width:widths[i]-4,height:rh-4,borderWidth:.35,backgroundColor:white,fontSize:7});
+     }else{
+       actualLines[i].forEach((ln,k)=>{if(k<45)pg.drawText(ln,{x:x+4,y:y-10-k*9,size:7.1,font,color:black});});
+     }
+     x+=widths[i];
+   }
+   y-=rh;row++;field++;
+ }
+ if(!blank&&photos.length){
+   let photoPage=null,photoY=0;
+   for(let i=0;i<photos.length;i++){
+     const ph=photos[i],o=orders.find(x=>x.page===Number(ph.page)),data=ph.data.split(',')[1],imgBytes=Uint8Array.from(atob(data),c=>c.charCodeAt(0));
+     let embedded;try{embedded=await pdf.embedJpg(imgBytes);}catch(e){embedded=await pdf.embedPng(imgBytes);}
+     const dims=embedded.scale(1),maxW=250,maxH=300,scale=Math.min(maxW/dims.width,maxH/dims.height,1),iw=dims.width*scale,ih=dims.height*scale;
+     if(!photoPage||photoY-ih-70<55){photoPage=pdf.addPage([W,H]);photoPage.drawText('REGISTRO FOTOGRÁFICO',{x:M,y:H-35,size:13,font:bold,color:navy});photoY=H-65;}
+     const label=(o?.mesa||ph.mesa||'MESA')+' – '+(ph.caption||'Fotografía');photoPage.drawText(label.slice(0,110),{x:M,y:photoY-12,size:9,font:bold,color:navy});
+     photoPage.drawImage(embedded,{x:M,y:photoY-22-ih,width:iw,height:ih});
+     photoY-=ih+55;
+   }
+ }
+ const bytes=await pdf.save();
+ download(bytes,blank?'Control Preventivos - En blanco.pdf':'Control_Preventivos_Definitivo_Completado.pdf');
+}
+async function original(){
+ if(!sourceBytes)throw Error('Importa primero el PDF original.');
+ const pdf=await PDFLib.PDFDocument.load(sourceBytes),black=PDFLib.rgb(.05,.05,.05);
+ const textFont=await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+ let noObs=[],noNames=false,marked=0,noAssign=[],approxAssign=[],unmapped=[],writtenNames=0,writtenObs=0;
+ const safe=t=>{let r='';for(const c of String(t??'').replace(/[\t\u00a0]/g,' ')){try{textFont.encodeText(c);r+=c;}catch(e){r+='?';}}return r;};
+ const fitText=(value,maxWidth,startSize=7.4)=>{let size=startSize;while(size>5.2&&textFont.widthOfTextAtSize(value,size)>maxWidth)size-=.25;return {text:value,size};};
+ const wrapText=(value,maxWidth,size=7.4)=>{
+   const result=[];safe(value).split(/\r?\n/).forEach(paragraph=>{
+     let line='';for(const word of paragraph.split(/\s+/).filter(Boolean)){
+       const candidate=line?line+' '+word:word;
+       if(line&&textFont.widthOfTextAtSize(candidate,size)>maxWidth){result.push(line);line=word;}else line=candidate;
+     }
+     if(line)result.push(line);
+   });return result;
+ };
+ const estimated=[];
+ const estimatePositions=o=>{
+   const num=p=>parseInt(String(p.op||'').trim(),10);
+   const located=o.points.filter(p=>Number.isFinite(p.pdfY)&&!p.estimated&&Number.isFinite(num(p))&&p.pageNo).sort((a,b)=>num(a)-num(b));
+   for(const p of o.points){
+     if((Number.isFinite(p.pdfY)&&!p.estimated)||!Number.isFinite(num(p))||!located.length)continue;
+     const n=num(p),lo=[...located].reverse().find(q=>num(q)<n),hi=located.find(q=>num(q)>n);
+     const pageNo=(lo||hi).pageNo;let y;
+     if(lo&&hi&&lo.pageNo===hi.pageNo)y=lo.pdfY+(hi.pdfY-lo.pdfY)*(n-num(lo))/(num(hi)-num(lo));
+     else{
+       const same=located.filter(q=>q.pageNo===pageNo),gaps=[];
+       for(let i=1;i<same.length;i++)gaps.push(Math.abs(same[i-1].pdfY-same[i].pdfY)/Math.max(1,(num(same[i])-num(same[i-1]))/10));
+       gaps.sort((a,b)=>a-b);const pitch=gaps.length?gaps[Math.floor(gaps.length/2)]:22;
+       y=lo?lo.pdfY-pitch*(n-num(lo))/10:hi.pdfY+pitch*(num(hi)-n)/10;
+     }
+     p.pageNo=pageNo;p.pdfY=y;p.estimated=true;estimated.push(`Orden ${o.order}, punto ${p.op}`);
+   }
+ };
+ for(const o of orders){
+   estimatePositions(o);
+   // Los tics se dibujan en la página exacta donde se detectó cada operación.
+   for(const p of o.points){
+     if(p.status!=='OK'&&p.status!=='NO')continue;
+     const pg=pdf.getPages()[(p.pageNo||o.page)-1];if(!pg)continue;
+     const x=p.status==='OK'?(Number.isFinite(p.okX)?p.okX:o.okX):(Number.isFinite(p.noX)?p.noX:o.noX);
+     if(!Number.isFinite(x)||!Number.isFinite(p.pdfY)){unmapped.push(`Orden ${o.order}, punto ${p.op||'sin número'} (columna ${p.status})`);continue;}
+     const y=p.pdfY+1.0;
+     pg.drawLine({start:{x:x-3.3,y:y+0.1},end:{x:x-0.8,y:y-2.4},thickness:1.25,color:black});
+     pg.drawLine({start:{x:x-0.8,y:y-2.4},end:{x:x+3.4,y:y+2.5},thickness:1.25,color:black});marked++;
+   }
+   const assigned=globalAssignments.map(v=>safe(String(v||'').trim())).filter(Boolean).slice(0,3);
+   if(!assigned.length)noNames=true;
+   const pointNotes=(o.points||[]).filter(p=>p.observation&&p.observation.trim()).map(p=>(p.op?'Op. '+p.op+': ':'')+p.observation.trim());
+   const obs=[o.observation,...pointNotes].filter(v=>v&&String(v).trim()).join('\n');
+   // Asignaciones/OBS se escriben en cada página que realmente contiene esos recuadros.
+   const metaList=(o.pages||[o.pageMeta||o]);
+   const obsMetaPage=([...metaList].reverse().find(m=>Number.isFinite(m.obsY))||{}).page;
+   for(const meta of metaList){
+     const pg=pdf.getPages()[meta.page-1];if(!pg)continue;
+     if(assigned.length&&meta.assignmentPseudo)approxAssign.push(meta.page);
+     if(assigned.length&&!Number.isFinite(meta.assignmentY)&&!(meta.assignmentRows||[]).some(Number.isFinite))noAssign.push(meta.page);
+     if(assigned.length&&(Number.isFinite(meta.assignmentY)||(meta.assignmentRows||[]).some(Number.isFinite)))assigned.forEach((fullName,index)=>{
+       const parts=fullName.split(/\s+/),first=parts.shift()||'',last=parts.join(' '),baseline=Number.isFinite(meta.assignmentRows?.[index])?meta.assignmentRows[index]:meta.assignmentY-index*12;
+       const a=fitText(first,meta.assignmentNameWidth||88,7.4),b=fitText(last,meta.assignmentSurnameWidth||88,7.4);
+       const nameCenter=Number.isFinite(meta.assignmentNameCenter)?meta.assignmentNameCenter:148.5;
+       const surnameCenter=Number.isFinite(meta.assignmentSurnameCenter)?meta.assignmentSurnameCenter:247.5;
+       if(a.text)pg.drawText(a.text,{x:nameCenter-textFont.widthOfTextAtSize(a.text,a.size)/2,y:baseline,size:a.size,font:textFont,color:black});
+       if(b.text)pg.drawText(b.text,{x:surnameCenter-textFont.widthOfTextAtSize(b.text,b.size)/2,y:baseline,size:b.size,font:textFont,color:black});writtenNames++;
+     });
+     if(obs&&!obsMetaPage&&meta===metaList[metaList.length-1])noObs.push(meta.page);
+     if(obs&&obsMetaPage&&meta.page===obsMetaPage){
+       const bx=Number.isFinite(meta.obsX)?meta.obsX:34,bw=Number.isFinite(meta.obsWidth)?meta.obsWidth:510;
+       const room=Number.isFinite(meta.obsBottom)?meta.obsY-meta.obsBottom-2:null;
+       let size=9.2,lines=wrapText(obs,bw,size);
+       // Reduce el tamaño para que el texto completo quepa en el recuadro OBS.
+       // Si el PDF no permite detectar el borde inferior, conserva un tamaño legible.
+       if(room!==null){
+         while((lines.length-1)*size*1.22>room&&size>5.2){size-=.3;lines=wrapText(obs,bw,size);}
+       }else{
+         while(lines.length>8&&size>5.2){size-=.3;lines=wrapText(obs,bw,size);}
+       }
+       lines.forEach((line,index)=>pg.drawText(line,{x:bx,y:meta.obsY-index*size*1.22,size,font:textFont,color:black}));writtenObs++;
+     }
+   }
+ }
+ const bytes=await pdf.save();download(bytes,'Ordenes originales cumplimentadas.pdf');
+ let msg=`PDF generado: ${marked} tics OK/NO, ${writtenNames} asignaciones y observaciones copiadas en ${writtenObs} órdenes.`;
+ if(noNames)msg+=' No hay nombres en «Asignaciones generales» (sección 2): añádelos para que se escriban en las órdenes.';
+ if(approxAssign.length)msg+=` Asignaciones en posición aproximada en la(s) página(s) ${[...new Set(approxAssign)].join(', ')}: revísalas.`;
+ if(noObs.length)msg+=` No se localizó el recuadro OBS en la(s) página(s) ${[...new Set(noObs)].join(', ')}: las observaciones no se escribieron allí.`;
+ if(noAssign.length)msg+=` No se localizó el recuadro de asignaciones en la(s) página(s) ${[...new Set(noAssign)].join(', ')}.`;
+ if(estimated.length)msg+=` ${estimated.length} marcas en puntos añadidos a mano se colocaron por posición estimada: revísalas (${estimated.slice(0,5).join('; ')}${estimated.length>5?'…':''}).`;
+ if(unmapped.length)msg+=` No se pudieron ubicar ${unmapped.length} marcas: ${unmapped.slice(0,8).join('; ')}${unmapped.length>8?'…':''}`;
+ $('export').textContent=msg;
+}
+function download(bytes,name){const blob=new Blob([bytes],{type:'application/pdf'});if(window.AndroidBridge&&typeof window.AndroidBridge.savePdf==='function'){const reader=new FileReader();reader.onload=()=>{try{window.AndroidBridge.savePdf(String(reader.result).split(',')[1],name);$('export').textContent='Documento enviado a Descargas: '+name;}catch(e){$('export').textContent='No se pudo guardar el PDF: '+e.message;}};reader.readAsDataURL(blob);return;}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);$('export').textContent='Documento generado: '+name;}
+$('blank').onclick=()=>summary(true).catch(e=>alert(e.message));$('filled').onclick=()=>summary(false).catch(e=>alert(e.message));$('orig').onclick=()=>original().catch(e=>alert(e.message));})();
+</script><script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('No se pudo registrar el modo instalable',err)));}</script>
+</body></html>
